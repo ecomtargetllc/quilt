@@ -173,6 +173,29 @@ describe('@shopify/react-testing', () => {
       );
     }
 
+    it('releases any stale promises when component is destroyed', async () => {
+      const wrapper = mount(<Counter />);
+      wrapper.act(() => new Promise(() => {}));
+      wrapper.act(() => new Promise(() => {}));
+      await wrapper.destroy();
+
+      function EffectChangeComponent({children}: {children?: ReactNode}) {
+        const [counter, setCounter] = useState(0);
+        useEffect(() => setCounter(100), []);
+
+        return (
+          // eslint-disable-next-line @shopify/jsx-prefer-fragment-wrappers
+          <div>
+            <Message>{counter}</Message>
+            {children}
+          </div>
+        );
+      }
+      const newWrapper = mount(<EffectChangeComponent />);
+
+      expect(newWrapper.find(Message)!.html()).toBe('<span>100</span>');
+    });
+
     it('updates element tree when state is changed', () => {
       const wrapper = mount(<Counter />);
 
